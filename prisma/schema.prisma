@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String     @id @default(cuid())
+  email      String     @unique
+  password   String
+  role       String     @default("ADVERTISER") // ADMIN | ADVERTISER
+  advertiser Advertiser?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Advertiser {
+  id           String              @id @default(cuid())
+  name         String
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailKeyword String              @default("")
+  dspAccountId String              @default("")
+  permission   Permission?
+  kpiData      KPISnapshot[]
+  supplyData   SupplySnapshot[]
+  audienceData AudienceSnapshot[]
+  tacticData   TacticSnapshot[]
+  lastReportAt DateTime?
+  createdAt    DateTime            @default(now())
+}
+
+model Permission {
+  id           String     @id @default(cuid())
+  advertiserId String     @unique
+  advertiser   Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  kpis         Boolean    @default(true)
+  supply       Boolean    @default(false)
+  audience     Boolean    @default(false)
+  tactics      Boolean    @default(true)
+  updatedAt    DateTime   @updatedAt
+}
+
+model KPISnapshot {
+  id           String     @id @default(cuid())
+  advertiserId String
+  advertiser   Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  date         DateTime
+  impressions  Int
+  clicks       Int
+  ctr          Float
+  spend        Float
+  cpm          Float
+  cpc          Float
+  roas         Float
+  conversions  Int
+  revenue      Float
+  createdAt    DateTime   @default(now())
+
+  @@unique([advertiserId, date])
+  @@index([advertiserId, date])
+}
+
+model SupplySnapshot {
+  id           String     @id @default(cuid())
+  advertiserId String
+  advertiser   Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  date         DateTime
+  source       String
+  format       String
+  impressions  Int
+  winRate      Float
+  floorPrice   Float
+  spend        Float
+  createdAt    DateTime   @default(now())
+
+  @@index([advertiserId, date])
+}
+
+model AudienceSnapshot {
+  id            String     @id @default(cuid())
+  advertiserId  String
+  advertiser    Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  date          DateTime
+  segmentName   String
+  segmentType   String
+  impressions   Int
+  uniqueReach   Int
+  frequency     Float
+  spend         Float
+  createdAt     DateTime   @default(now())
+
+  @@index([advertiserId, date])
+}
+
+model TacticSnapshot {
+  id           String     @id @default(cuid())
+  advertiserId String
+  advertiser   Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  date         DateTime
+  orderName    String
+  tacticName   String
+  impressions  Int
+  clicks       Int
+  spend        Float
+  roas         Float
+  orders       Int
+  revenue      Float
+  createdAt    DateTime   @default(now())
+
+  @@index([advertiserId, date])
+}
